@@ -1,5 +1,5 @@
 const express = require('express');
-const axios = require('axios');
+const cloudscraper = require('cloudscraper'); // Ganti axios dengan cloudscraper
 const cheerio = require('cheerio');
 const router = express.Router();
 
@@ -8,16 +8,13 @@ router.get('/', async (req, res) => {
         const page = req.query.page || 1;
         const targetUrl = `https://web1.mgkomik.cc/?page=${page}`;
 
-        // Langsung hit target (nggak perlu corsproxy di backend)
-        const { data } = await axios.get(targetUrl, {
+        // Menggunakan cloudscraper untuk bypass proteksi Cloudflare
+        const data = await cloudscraper.get({
+            uri: targetUrl,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Referer': 'https://web1.mgkomik.cc/',
-            },
-            timeout: 15000,
-            maxRedirects: 5
+                'Referer': 'https://web1.mgkomik.cc/'
+            }
         });
 
         const $ = cheerio.load(data);
@@ -27,7 +24,7 @@ router.get('/', async (req, res) => {
         if (pageTitle.includes('just a moment') || pageTitle.includes('cloudflare') || pageTitle.includes('ddos')) {
             return res.status(503).json({
                 success: false,
-                message: "Blocked by Cloudflare bot protection",
+                message: "Masih terblokir oleh Cloudflare (IP Server Railway ketahuan)",
                 html_title: pageTitle
             });
         }
